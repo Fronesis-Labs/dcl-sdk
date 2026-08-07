@@ -1,16 +1,16 @@
 {
   "name": "@fronesis-labs/dcl-sdk",
   "version": "0.1.0",
-  "description": "TypeScript client + independent chain verification for the DCL / Leibniz Layer protocol.",
-  "type": "module",
+  "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "license": "Apache-2.0",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
-    "test": "node --experimental-strip-types src/verify.test.ts"
+    "build": "tsc"
   },
   "devDependencies": {
-    "typescript": "^5.5.0"
+    "typescript": "^7.0.2"
   }
 }
