@@ -1,20 +1,36 @@
 # @fronesis-labs/dcl-sdk
 
-TypeScript SDK for the **DCL / Leibniz Layer™** protocol — a tamper-evident audit chain for AI agent decisions and MCP tool calls.
+**Don't trust the agent. Trust the proof.**
 
-This package is **100% free and Apache-2.0-licensed on purpose.** It contains no payment logic and no server dependency for its core function: given a chain record, it recomputes the hash locally and tells you if the record was tampered with. No API key, no round-trip, no trust required in the server that's showing you the record.
+TypeScript SDK for the **DCL / Leibniz Layer™** protocol — a tamper-evident
+audit chain for AI agent decisions and MCP tool calls.
+
+This package is **100% free and Apache-2.0-licensed on purpose.** It
+contains no payment logic and no server dependency for its core function:
+given a chain record, it recomputes the hash locally and tells you if the
+record was tampered with. No API key, no round-trip, no trust required in
+the server that's showing you the record.
 
 ```bash
 npm install @fronesis-labs/dcl-sdk
 ```
 
-## Why a free client for a paid protocol
+## Why a Free Client for a Paid Protocol
 
-DCL's paid layer is the *evaluation* (running an agent's output through a policy and getting a verdict, via [x402](https://github.com/coinbase/x402) micropayments in USDC on Base). Verification of a chain you already have is a different problem — and gating it behind a paywall would defeat the point of an audit trail. If you can't independently check that a record wasn't edited without paying the party who might have edited it, it isn't really independent verification.
+Verifying a chain you already have is a different problem from *generating*
+a verdict — and it's the one part of an audit system that has to be
+independently checkable, or the audit trail isn't really independent. If
+you can only confirm a record wasn't edited by paying the same party who
+might have edited it, that's not verification.
 
-So: the protocol is open. Anyone can implement a DCL-compatible client, and `dcl-sdk` is the reference implementation for TypeScript/JavaScript. See [`PROTOCOL.md`](./PROTOCOL.md) for the full byte-for-byte spec if you want to implement your own client in another language.
+So the protocol is open. Anyone can implement a DCL-compatible client, and
+`dcl-sdk` is the reference implementation for TypeScript/JavaScript. See
+[`PROTOCOL.md`](./PROTOCOL.md) for the full byte-for-byte spec if you want
+to implement your own client in another language. DCL's paid layer — the
+policy evaluation that produces a verdict in the first place — lives
+separately in [`dcl-webhook`](https://github.com/Fronesis-Labs/dcl-webhook).
 
-## What's in the box
+## What's in the Box
 
 | Export | What it does |
 |---|---|
@@ -22,11 +38,12 @@ So: the protocol is open. Anyone can implement a DCL-compatible client, and `dcl
 | `recomputeTxHash(record)` | Recomputes the hash of a single record. |
 | `canonicalContent(record)` / `canonicalJson(value)` | The exact canonicalization rules (byte-identical to the Python reference) — exposed for anyone building their own tooling on top. |
 | `formatSeal(txHash, inputHash, timestamp, options?)` | Formats a human-readable "Verified by..." seal from already-public fields. Pure presentation, no network call, brandable for other implementers. |
-| `DclClient` | Thin HTTP wrapper over the `dcl-webhook` REST API (evaluate, audit, chain export, health, policies). Does **not** handle payment itself — inject your own x402-aware `fetch` via `fetchImpl` if you're calling paid endpoints. |
+| `DclClient` | Thin HTTP wrapper over the `dcl-webhook` REST API (evaluate, audit, chain export, health, policies). Does **not** handle payment itself — inject your own payment-aware `fetch` via `fetchImpl` if you're calling paid endpoints. |
 
-## Quickstart: verify records you already have
+## Quickstart: Verify Records You Already Have
 
-No client, no network — if you already have records (from a log, a webhook payload, wherever), verify them offline:
+No client, no network — if you already have records (from a log, a webhook
+payload, wherever), verify them offline:
 
 ```ts
 import { verifyChain } from "@fronesis-labs/dcl-sdk";
@@ -40,7 +57,7 @@ if (result.clean) {
 }
 ```
 
-## Quickstart: pull and verify a live chain
+## Quickstart: Pull and Verify a Live Chain
 
 ```ts
 import { DclClient, verifyChain } from "@fronesis-labs/dcl-sdk";
@@ -57,7 +74,7 @@ if (result.clean) {
 }
 ```
 
-## Quickstart: format a seal for display
+## Quickstart: Format a Seal for Display
 
 ```ts
 import { formatSeal } from "@fronesis-labs/dcl-sdk";
@@ -81,9 +98,14 @@ formatSeal(txHash, inputHash, timestamp, {
 });
 ```
 
-## Calling paid evaluation endpoints
+## Calling the Paid Evaluation Endpoints
 
-`DclClient` shapes the requests/responses for `dcl-webhook`'s evaluation tiers — `fast`, `strict`, `jailbreak`, `safety`, `quality` — plus secrets/PII scanning. These endpoints are x402-metered; the SDK doesn't move money, it just gives you typed request/response shapes and lets you supply your own payment-aware `fetch`:
+`DclClient` shapes the requests/responses for `dcl-webhook`'s evaluation
+tiers — `fast`, `strict`, `jailbreak`, `safety`, `quality` — plus
+secrets/PII scanning. These endpoints are metered per call; the SDK doesn't
+move money itself, it just gives you typed request/response shapes and lets
+you supply your own payment-aware `fetch` (the reference implementation
+settles via [x402](https://github.com/coinbase/x402) in USDC on Base):
 
 ```ts
 import { DclClient } from "@fronesis-labs/dcl-sdk";
@@ -99,17 +121,27 @@ const result = await client.evaluate("strict", {
 console.log(result.verdict, result.tx_hash, result.seal_text);
 ```
 
-## Design notes
+## Design Notes
 
-- **Node 18+ or a browser.** `sha256Hex` uses Web Crypto (`crypto.subtle`), available natively in both.
-- **Byte-identical to the Python reference (`dcl-core`).** The trickiest part is `drift_context` canonicalization — Python's `json.dumps(obj, sort_keys=True)` uses `", "` / `": "` separators, which `JSON.stringify` does not reproduce. `canonicalJson()` exists specifically to close that gap; see [`PROTOCOL.md §1.1`](./PROTOCOL.md#11-drift_context-canonicalization) for why.
-- **No secrets, no keys, nothing to leak.** The entire local-verification path is pure functions over data you already have.
+- **Node 18+ or a browser.** `sha256Hex` uses Web Crypto (`crypto.subtle`),
+  available natively in both.
+- **Byte-identical to the Python reference (`dcl-core`).** The trickiest
+  part is `drift_context` canonicalization — Python's
+  `json.dumps(obj, sort_keys=True)` uses `", "` / `": "` separators, which
+  `JSON.stringify` does not reproduce. `canonicalJson()` exists specifically
+  to close that gap; see
+  [`PROTOCOL.md §1.1`](./PROTOCOL.md#11-drift_context-canonicalization) for
+  why.
+- **No secrets, no keys, nothing to leak.** The entire local-verification
+  path is pure functions over data you already have.
 
 ## Links
 
 - Protocol spec: [`PROTOCOL.md`](./PROTOCOL.md)
-- Live server: [mcp.fronesislabs.com](https://mcp.fronesislabs.com) / [x402.fronesislabs.com](https://x402.fronesislabs.com)
-- MCP server (Smithery): [fronesislabs/dcl-trust-oracle](https://smithery.ai/server/fronesislabs/dcl-trust-oracle)
+- Live server: [mcp.fronesislabs.com](https://mcp.fronesislabs.com) /
+  [x402.fronesislabs.com](https://x402.fronesislabs.com)
+- MCP server (Smithery):
+  [fronesislabs/dcl-trust-oracle](https://smithery.ai/server/fronesislabs/dcl-trust-oracle)
 - Org: [github.com/Fronesis-Labs](https://github.com/Fronesis-Labs)
 
 ## License
