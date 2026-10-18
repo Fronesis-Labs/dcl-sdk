@@ -138,8 +138,7 @@ console.log(result.verdict, result.tx_hash, result.seal_text);
 ## Links
 
 - Protocol spec: [`PROTOCOL.md`](./PROTOCOL.md)
-- Live server: [mcp.fronesislabs.com](https://mcp.fronesislabs.com) /
-  [x402.fronesislabs.com](https://x402.fronesislabs.com)
+- Live MCP server: [mcp.fronesislabs.com/mcp](https://mcp.fronesislabs.com/mcp)
 - MCP server (Smithery):
   [fronesislabs/dcl-trust-oracle](https://smithery.ai/server/fronesislabs/dcl-trust-oracle)
 - Org: [github.com/Fronesis-Labs](https://github.com/Fronesis-Labs)
